@@ -1,0 +1,84 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package algorithm;
+
+/**
+ *
+ * @author hamid
+ */
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
+import problems.Action;
+import problems.Problem;
+import problems.State;
+
+public class BFS {
+
+    public static ArrayList<Action> search(Problem p) {
+        return search(p, true);
+    }
+
+    public static ArrayList<Action> search(Problem p, boolean isGraphSearch) {
+
+        Queue<Expandable> BFSQueue = new LinkedList<>();
+        ArrayList<State> closed = new ArrayList<>();
+
+        Expandable initE = new Expandable();
+        initE.state = p.initialState();
+        initE.actionSequence = new ArrayList<>();
+
+        BFSQueue.add(initE);
+
+        while (!BFSQueue.isEmpty()) {
+            Expandable s = BFSQueue.remove();
+            if (p.goalTest(s.state)) {
+                //Goal Reached
+                System.out.println("[BFS] Goal Reached !");
+                return s.actionSequence;
+            } else {
+                //Close Current State
+                closed.add(s.state);
+                //Expand Childs
+                for (Action a : p.actions(s.state)) {
+                    for (State targetState : p.result(s.state, a)) { //undeterministic states (more than 1)
+                        boolean mustAdd = true;
+                        if (isGraphSearch) {
+                            for (State closedState : closed) {
+                                if (closedState.isEquals(targetState)) {
+                                    mustAdd = false;
+                                    break;
+                                }
+                            }
+                        }
+                        for (Expandable openState : BFSQueue) {
+                            if (openState.state.isEquals(targetState)) {
+                                mustAdd = false;
+                                break;
+                            }
+                        }
+                        if (mustAdd) {
+                            Expandable SAS = new Expandable();
+                            SAS.state = targetState;
+                            //Clone Parent Action Sequence
+                            ArrayList<Action> asClone = new ArrayList<>();
+                            for (Action sa : s.actionSequence) {
+                                asClone.add(sa);
+                            }
+                            asClone.add(a);
+                            SAS.actionSequence = asClone;
+                            BFSQueue.add(SAS);
+                        }
+                    }
+                }
+            }
+        }
+        //There is no answer to algorithm.Problem
+        System.err.println("[BFS] No Answer !");
+        return null;
+    }
+
+}
